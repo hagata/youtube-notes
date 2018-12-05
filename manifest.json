@@ -19,6 +19,7 @@
         "scripts": ["dist/main.js"]
     },
     "permissions": [
-        "contextMenus"
+        "contextMenus",
+        "tabs"
     ]
 }

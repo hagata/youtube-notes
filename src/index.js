@@ -5,13 +5,26 @@ import { resolve } from 'path';
 
 console.log('FIREBASE added', firebase);
 
-
 // Communication with Popup
 // LONG LIVED CONNECTION
 chrome.extension.onConnect.addListener(function(port) {
   console.log("Connected .....");
   port.onMessage.addListener(function(msg) {
-       console.log("message recieved" + msg);
+      console.log("message recieved", msg);
+      // on load
+      if (msg.write) {
+        console.log('Backend write request', msg.write)
+        writeNotes(msg.write).then(msg => {
+          if (msg == 'saved') {
+            port.postMessage('saved')
+          }
+        })
+        .catch(err => {
+          console.log('err from top level promise')
+        })
+        return;
+      }
+
       getNotes(port).then(payload => {
         console.log('RESOLVED PAYLOAD', payload)
         port.postMessage({notesData: payload});
@@ -63,6 +76,27 @@ function getNotes() {
       reject('ERROR', error)
   })
 })
+}
+
+/**
+ *Writes notes to Firebase
+ *
+ */
+function writeNotes(writeData) {
+  return new Promise((resolve, reject) => {
+    const userID = 'user-uuid' // TODO: Use actual user ID
+    const docRef = db.collection("user-notes").doc(userID)
+
+    docRef.set({notes: writeData})
+      .then(function () {
+        console.log("Document successfully written!");
+        resolve('saved')
+      })
+      .catch(function (error) {
+        console.error("Error writing document: ", error);
+        reject("Error writing document: ", error)
+      });
+  })
 }
 
 /**

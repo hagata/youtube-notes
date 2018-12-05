@@ -11,7 +11,22 @@
             font-size: 16px;
             font-weight: 500;
             padding: 12px;
-            border-bottom: 1px solid #afafaf
+            border-bottom: 1px solid #afafaf;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .header__title {
+            display: flex;
+        }
+
+        .on-yt-indicator {
+            display: block;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: red;
+            display: none;
         }
 
         .ytnotes-popup {
@@ -27,6 +42,30 @@
             border-right: 1px solid #afafaf;
             flex-basis: 20%;
             padding: 12px;
+        }
+
+        .notes-sidebar__notes {
+            margin: 0;
+            padding: 0;
+            border-bottom: 1px solid lightslategray;
+        }
+
+        .notes-sidebar__note {
+            cursor: pointer;
+            margin: 0;
+            padding: 12px 0;
+            border-bottom: 1px solid lightslategray;
+            list-style-type: none;
+        }
+
+        .new-note-button {
+            /* background: none;
+            border: none;
+            border-bottom: 1px solid lightslategray;
+            font-size: .875rem;
+            margin: 0;
+            outline: none;
+            padding: 0; */
         }
 
         .editor-view {
@@ -49,19 +88,22 @@
         <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
         <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
         <header>
-            YT NOTES
+            <span class="header__title">YT NOTES <span class="on-yt-indicator"></span></span>
+            <span class="save-indicator"></span>
         </header>
     <section class="ytnotes-popup">
         <aside class="notes-sidebar">
+            <button class="new-note-button">NEW NOTE</button>
             <ul class="notes-sidebar__notes">
                 <!-- Notes from the database go here -->
             </ul>
         </aside>
         <div  class="editor-view">
-            <div class="offline">
+            <!-- TODO: Add offline handling -->
+            <div class="offline" hidden>
                 No Internet Connection
             </div>
-        <span class="notes-title">Video Title goes here</span>
+        <h1 class="note-title">Video Title goes here</h1>
             <div class="note-area" contenteditable="true">
                 notes go here
             </div>
