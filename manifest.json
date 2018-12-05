@@ -1,6 +1,6 @@
 {
     "manifest_version": 2,
-    "name": "Unbyas - Contributor",
+    "name": "YT Notes",
     "version": "0.1",
     "description": "Chrome Extension Writing and managing notes for YouTube videos.",
     "browser_action": {
@@ -18,8 +18,15 @@
         "persistent": false,
         "scripts": ["dist/main.js"]
     },
+    "content_scripts": [{
+        "run_at": "document_end",
+        "matches": ["<all_urls>"],
+        "all_frames": true,
+        "js": ["src/content.js"]
+    }],
     "permissions": [
         "contextMenus",
+        "activeTab",
         "tabs"
     ]
 }
