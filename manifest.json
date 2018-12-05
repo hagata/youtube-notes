@@ -1,0 +1,24 @@
+{
+    "manifest_version": 2,
+    "name": "Unbyas - Contributor",
+    "version": "0.1",
+    "description": "Chrome Extension Writing and managing notes for YouTube videos.",
+    "browser_action": {
+        "default_icon": "assets/yt-note-logo-48.png",
+        "default_title": "YT Notes",
+        "default_popup": "src/popup.html"
+    },
+    "icons": {
+        "16": "assets/yt-note-logo-16.png",
+        "48": "assets/yt-note-logo-48.png",
+        "128": "assets/yt-note-logo-128.png"
+    },
+
+    "background": {
+        "persistent": false,
+        "scripts": ["dist/main.js"]
+    },
+    "permissions": [
+        "contextMenus"
+    ]
+}

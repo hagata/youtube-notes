@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px;
+            border-bottom: 1px solid #afafaf
+        }
+
+        .ytnotes-popup {
+            display: flex;
+            margin: 0;
+            min-width: 680px;
+            outline: none;
+            padding: 0;
+        }
+        .notes-sidebar {
+            background: hsl(0, 0%, 96%);
+            color: hsl(0, 0%, 6%);
+            border-right: 1px solid #afafaf;
+            flex-basis: 20%;
+            padding: 12px;
+        }
+
+        .editor-view {
+            flex-basis: 80%;
+            height: 50vh;
+            min-height: 600px;
+            padding: 12px 1rem;
+        }
+        .note-area {
+            height: 100%;
+        }
+
+        .note-area:focus {
+            outline: none;
+        };
+    </style>
+</head>
+
+<body>
+        <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+        <header>
+            YT NOTES
+        </header>
+    <section class="ytnotes-popup">
+        <aside class="notes-sidebar">
+            <ul class="notes-sidebar__notes">
+                <!-- Notes from the database go here -->
+            </ul>
+        </aside>
+        <div  class="editor-view">
+            <div class="offline">
+                No Internet Connection
+            </div>
+        <span class="notes-title">Video Title goes here</span>
+            <div class="note-area" contenteditable="true">
+                notes go here
+            </div>
+        </div>
+    </section>
+
+<script src="popup.js"></script>
+</body>
+
+</html>
