@@ -85,7 +85,6 @@ function populateSidebar() {
   }
 
   NOTES_DATA.forEach((element, index) => {
-    console.log('populate sitebar', element);
     const noteItem = document.createElement('li');
 
     noteItem.classList.add('notes-sidebar__note');
@@ -150,6 +149,14 @@ function setCurrentNoteView() {
     notesTitle.href = NOTES_DATA[ACTIVE_NOTE].videoShareUrl;
   }
   notesArea.innerHTML = NOTES_DATA[ACTIVE_NOTE].note;
+
+  //bind timestamp links
+  const noteLinks = notesArea.querySelectorAll('.note_area__timestamp-wrapper')
+  console.log('COLLECTING LINKS', noteLinks)
+  noteLinks.forEach((current, index, link) => {
+    console.log('Handline link', {current, index, link})
+    timestampClickHandler(current)
+  })
   setSaveIndicator();
 }
 
@@ -195,25 +202,42 @@ function addTimeMarkerToNote() {
   chrome.tabs.sendMessage(activeTab, {'method': 'currentTime'}, (response) => {
     const time = response.data;
     const timestampWrapper = document.createElement('div');
+    timestampWrapper.classList.add('note_area__timestamp-wrapper')
+    timestampWrapper.style.display = 'inline-block';
+
     const stampNode = document.createElement('a');
 
     stampNode.innerHTML = `${time.timestamp}`;
     stampNode.href =
-    `${YTShortLink}${response.data.videoID}?t=${Math.round(time.seconds)}`;
+    `${YTShortLink}${time.videoID}?t=${Math.round(time.seconds)}`;
 
     stampNode.classList.add('notes_area__timestamp');
-    stampNode.addEventListener('click', (e) => {
+
+    stampNode.addEventListener('blur', (e) => {
       e.preventDefault();
       console.log('Link CLicked event target', e.target);
 
       chrome.tabs.create({url: e.target.href, selected: false});
-    }, false);
+    });
 
+    timestampWrapper.addEventListener('click', timestampClickHandler)
 
-    console.log('TIMESTAMPED', response);
     timestampWrapper.appendChild(stampNode);
     notesArea.appendChild(timestampWrapper);
   });
+}
+
+function timestampClickHandler(parentNode) {
+  
+  const link = parentNode.firstChild
+  console.log('LINK HANDLER', link)
+  if (link) {
+    parentNode.addEventListener('click', e => {
+      console.log('Link true; making tab!', link.href)
+      e.preventDefault();
+      chrome.tabs.create({url: link.href, selected: false});
+    })
+  }
 }
 
 function newNote() {

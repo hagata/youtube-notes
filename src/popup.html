@@ -7,6 +7,7 @@
         --color-bg-gray: #f5f5f5;
         --color-dark-gray: #424242;
         --color-icon-gray: #616161;
+        --color-contrast-gray: #90a4ae;
         }
 
         body {
@@ -28,6 +29,29 @@
         .header__title {
             display: flex;
             justify-content: center;
+        }
+
+        .add-marker__button {
+            align-items: center;
+            background: none;
+            border: none;
+            color: var(--color-dark-gray);
+            cursor: pointer;
+            display: flex;
+            font-size: .625rem;
+            font-weight: 700;
+            justify-content: center;
+            margin: 0 0 12px;
+            outline: transparent;
+            text-transform: uppercase;
+            padding: 0;
+        }
+        .add-marker__icon {
+            padding-top: 2px;
+        }
+
+        .add-marker__icon svg{
+            width: 16px;
         }
 
         .note-title__link {
@@ -64,14 +88,13 @@
         .notes-sidebar__notes {
             margin: 0;
             padding: 0;
-            border-bottom: 1px solid lightslategray;
         }
 
         .notes-sidebar__note {
             cursor: pointer;
             margin: 0;
             padding: 12px 0;
-            border-bottom: 1px solid lightslategray;
+            border-bottom: 1px solid var(--color-contrast-gray);
             list-style-type: none;
         }
 
@@ -89,7 +112,7 @@
             font-size: .875rem;
             font-weight: 700;
             margin: 0 0 12px;
-            outline: none;
+            outline: transparent;
             padding: 0;
             cursor: pointer;
         }
@@ -119,13 +142,15 @@
             outline: none;
         };
 
+
     </style>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
 </head>
 
 <body>
-        <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
-        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+        <!-- <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" /> -->
+        <!-- TODO: USER Account Firebase UI -->
         <header>
             <span class="header__title">YT NOTES <span class="on-yt-indicator"></span></span>
             <span class="save-indicator"></span>
@@ -147,10 +172,17 @@
             <div class="offline" hidden>
                 No Internet Connection
             </div>
-            <button class="add-marker__button">Add Time Marker</button>
-            <h1 class="note-title"><a href="" class="note-title__link">Video Title goes here</a></h1>
+            <button class="add-marker__button">
+                <span class="add-marker__icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                </span>
+                <span>
+                    Add Time Marker
+                </span>
+                </button>
+            <h1 class="note-title"><a href="" class="note-title__link"></a></h1>
             <div class="note-area" contenteditable="true">
-                Loading…
+                Loading...
             </div>
         </div>
     </section>
