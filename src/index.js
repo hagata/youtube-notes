@@ -1,6 +1,5 @@
 import firebase from '@firebase/app';
 import '@firebase/firestore';
-import {resolve} from 'path';
 // import firestore from 'firebase/firestore';
 
 console.log('FIREBASE added', firebase);
@@ -54,7 +53,7 @@ db.settings({
 
 /**
  *Makes the query to Firebase to get the notes for the current user
- * @param {} port The Chrome runtime port
+ * @return {Promise} resolved with Firebase Data
  *
  */
 function getNotes() {
@@ -80,7 +79,8 @@ function getNotes() {
 
 /**
  *Writes notes to Firebase
- *
+ * @param {Object} writeData Object to write to Firebase.
+ * @return {Promise} Resolves when Firebase write callback is recieved.
  */
 function writeNotes(writeData) {
   return new Promise((resolve, reject) => {

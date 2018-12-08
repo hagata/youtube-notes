@@ -6,6 +6,8 @@ let notesTitle;
 let notesTitleLink;
 let timstampButton;
 let deleteNoteButton;
+let buttonNotesMenuMore;
+let NotesMenuMore;
 // TODO: rename buttons to start with 'button'
 let newNoteButton;
 let isYouTube = false;
@@ -41,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
   timstampButton = document.querySelector('.add-marker__button');
   deleteNoteButton = document.querySelector('.delete-note__buton');
   notesList = document.querySelector('.notes-sidebar__notes');
+  buttonNotesMenuMore = document.querySelector('.editor-toolbar__more-button');
+  notesMenuMore = document.querySelector('.editor-toolbar__more');
 
   port.postMessage('YTNotes-loaded');
 });
@@ -90,15 +94,17 @@ function populateSidebar() {
    *  ACTIVE_NOTE to match the order of the sidebar
    */
   for (const note in NOTES_DATA) {
-    const noteItem = document.createElement('li');
+    if (NOTES_DATA.hasOwnProperty(note)) {
+      const noteItem = document.createElement('li');
 
-    noteItem.classList.add('notes-sidebar__note');
-    noteItem.innerHTML = `${NOTES_DATA[note].videoTitle}`;
-    ACTIVE_NOTE = note;
-    noteItem.dataset.noteId = `${note}`;
-    notesList.appendChild(noteItem);
+      noteItem.classList.add('notes-sidebar__note');
+      noteItem.innerHTML = `${NOTES_DATA[note].videoTitle}`;
+      ACTIVE_NOTE = note;
+      noteItem.dataset.noteId = `${note}`;
+      notesList.appendChild(noteItem);
+      setSidebarActiveNote();
+    }
   };
-  setSidebarActiveNote();
 }
 
 /**
@@ -106,14 +112,14 @@ function populateSidebar() {
  *
  */
 function setSidebarActiveNote() {
-  const active = notesList.querySelector(`[data-note-id="${ACTIVE_NOTE}"]`)
-  console.log('ACTIVE NOTE SIDEBAR NODE', )
+  const active = notesList.querySelector(`[data-note-id="${ACTIVE_NOTE}"]`);
+  console.log('ACTIVE NOTE SIDEBAR NODE', );
   // Remove the class on the current active item
-  const previous = notesList.querySelector('.notes-sidebar__note--active')
+  const previous = notesList.querySelector('.notes-sidebar__note--active');
   if (previous) {
-    previous.classList.remove('notes-sidebar__note--active')
+    previous.classList.remove('notes-sidebar__note--active');
   }
-  active.classList.add('notes-sidebar__note--active')
+  active.classList.add('notes-sidebar__note--active');
 }
 
 // TODO: function sort section
@@ -153,13 +159,18 @@ function bindEvents() {
     timstampButton.classList.remove('add-marker__button--disabled');
   }
 
-  deleteNoteButton.addEventListener('click', e => {
-    console.log('deleting note: ', NOTES_DATA[ACTIVE_NOTE].videoID)
+  deleteNoteButton.addEventListener('click', (e) => {
+    console.log('deleting note: ', NOTES_DATA[ACTIVE_NOTE].videoID);
     delete NOTES_DATA[ACTIVE_NOTE];
     port.postMessage({write: NOTES_DATA});
     populateSidebar();
-    //TODO: Update the view to some other note?
-  })
+    console.log('attempt to show by didqw');
+    // TODO: Update the view to some other note?
+  });
+
+  buttonNotesMenuMore.addEventListener('click', (e) => {
+    notesMenuMore.classList.toggle('editor-toolbar__more--open');
+  });
 }
 
 /**
@@ -196,7 +207,7 @@ function setCurrentNoteView() {
     console.log('Handline link', {current, index, link});
     timestampClickHandler(current);
   });
-  setSaveIndicator({date:NOTES_DATA[ACTIVE_NOTE].lastSaved});
+  setSaveIndicator({date: NOTES_DATA[ACTIVE_NOTE].lastSaved});
 }
 
 /**
@@ -207,27 +218,25 @@ function setCurrentNoteView() {
 function setSaveIndicator(state) {
   console.log('state', state);
   let savedTime;
-  const today = new Date()
+  const today = new Date();
   // states to manage, typing,
   // saving -> makes call to background script, get's promise when done,
   // saving is it's own function that will hit Firebase
   const saveIndicator = document.querySelector('.save-indicator');
   if (state.note) {
-    saveIndicator.innerHTML = state;
+    saveIndicator.innerHTML = state.note;
     return;
   }
   // Passed a specific date string, e.g., One stored in Firebase
   if (state.date) {
     savedTime = new Date(state.date);
-  }
-  else {
+  } else {
     savedTime = new Date(NOTES_DATA[ACTIVE_NOTE].lastSaved);
   }
 
   if (today.toDateString() == savedTime.toDateString()) {
     saveIndicator.innerHTML = `Last Saved: ${savedTime.toLocaleTimeString()}`;
-  }
-  else {
+  } else {
     saveIndicator.innerHTML = `Last Saved: ${savedTime.toDateString()}`;
   }
 }
@@ -314,11 +323,13 @@ function newNote() {
   getYTData().then((note) => {
     // Check if the note exists first
     if (NOTES_DATA[note.videoID]) {
-      console.log('VIDEO NOTE ALREADY EXISTS. ', )
+      console.log('VIDEO NOTE ALREADY EXISTS. ', );
       ACTIVE_NOTE = note.videoID;
       setSidebarActiveNote();
-      setCurrentNoteView(ACTIVE_NOTE)
-      setSaveIndicator({note: 'Note for video already exists. Switched to it!'})
+      setCurrentNoteView(ACTIVE_NOTE);
+      setSaveIndicator({
+        note: 'Note for video already exists. Switched to it!',
+      });
       return;
     }
 
@@ -336,7 +347,7 @@ function newNote() {
  * method message.
  * handles YT Video notes, and 'blank' notes created from non-YouTube URL's
  *
- * @returns {Promise} Promise resolves new note data.
+ * @return {Promise} Promise resolves new note data.
  */
 function getYTData() {
   const id = generateUUID();
@@ -353,9 +364,9 @@ function getYTData() {
       resolve(note);
     }
     if (isYouTube) {
-      console.log('%cTrying to Get YT title', 'color: red; font-weight: bold');
-      // Get the video ID
-      chrome.tabs.sendMessage(activeTab, {method: 'getYTData'}, function(response) {
+      chrome.tabs.sendMessage(activeTab, {
+        method: 'getYTData',
+      }, function(response) {
         console.log('Get DATA response', response);
         note.videoTitle = response.data.videoTitle;
         note.videoID = response.data.videoID;
@@ -368,16 +379,22 @@ function getYTData() {
 }
 
 // TODO: split files
-
-// UTILS
-
+/**
+ * Debounce utility
+ * @param {Function} func function to debounce.
+ * @param {Number} wait time in miliseconds to debunce by
+ * @param {Boolean} immediate True to fire on the first occurrance.
+ * @return {function}
+ */
 function debounce(func, wait, immediate) {
   let timeout;
-  return function() {
-    const context = this; const args = arguments;
+  return function(...args) {
+    console.log('DEBOUCE ARGS', ...args);
+    const context = this;
+    // const args = arguments;
     const later = function() {
       timeout = null;
-      if (!immediate) func.apply(context, args);
+      if (!immediate) func.apply(context, ...args);
     };
     const callNow = immediate && !timeout;
     clearTimeout(timeout);
@@ -398,6 +415,7 @@ function generateUUID() {
 
 /**
  * Converts a single character into 4 random characters
+ * @return {String}
  */
 function s4() {
   return Math.floor((1 + Math.random()) * 0x10000)

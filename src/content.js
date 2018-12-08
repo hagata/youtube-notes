@@ -1,7 +1,5 @@
 console.log('CONTENT SCRIPT LOADED');
 
-const port = chrome.runtime.connect();
-
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
       console.log(sender.tab ?
@@ -26,12 +24,11 @@ chrome.runtime.onMessage.addListener(
 
 
 /**
-   * Get's page data from the YouTube page DOM
-   * @return {Promise} returns data
-   *
-   */
+ * Get's page data from the YouTube page DOM
+ * @return {Promise} returns data
+ *
+ */
 function getYTData() {
-  // console.log(window.ytInitialData.contents.twoColumnWatchNextResults.results.results.contents[0].videoPrimaryInfoRenderer.title.simpleText)
   return new Promise((resolve, reject) => {
     const videoTitle = document.querySelector('.title').innerText;
     const pageData = parseQuery(window.location.search);
@@ -42,11 +39,12 @@ function getYTData() {
     });
   });
 }
+
 /**
-   * Get's current video time when method is called
-   * @return {Promise} returns video time in seconds
-   *
-   */
+ * Get's current video time when method is called
+ * @return {Promise} returns video time in seconds
+ *
+ */
 function getVideoTimeInSeconds() {
   return new Promise((resolve, reject) => {
     const video = document.querySelector('video');
@@ -68,6 +66,11 @@ function getVideoTimeInSeconds() {
 
 // UTILS
 
+/**
+ * Parses a query string to pull out values
+ * @param {String} search Urls query string
+ * @return {Object} parsed args in a nice and neat object.
+ */
 function parseQuery(search) {
   const args = search.substring(1).split('&');
   const argsParsed = {};
@@ -89,14 +92,15 @@ function parseQuery(search) {
 }
 
 /**
- * Returns time in HH:MM:SS
+ * Returns time in HH:MM:SS. Omits Hours if 0.
  * @param {String} time in hh:mm:ss format
+ * @return {String} String from time as HH:MM:SS
  */
 function formatTimeString(time) {
-  const sec_num = parseInt(time, 10); // don't forget the second param
-  let hours = Math.floor(sec_num / 3600);
-  const minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-  let seconds = sec_num - (hours * 3600) - (minutes * 60);
+  const secNum = parseInt(time, 10); // don't forget the second param
+  let hours = Math.floor(secNum / 3600);
+  const minutes = Math.floor((secNum - (hours * 3600)) / 60);
+  let seconds = secNum - (hours * 3600) - (minutes * 60);
 
   if (hours <= 0) {
     hours = '0';

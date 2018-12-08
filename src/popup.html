@@ -130,6 +130,38 @@
             color: gray;
         }
 
+        .editor-toolbar {
+            display: grid;
+            position: relative;
+            grid-template-columns: auto 32px;
+            grid-template-areas: "main more";
+        }
+
+        .editor-toolbar__main {
+            display: flex;
+            grid-area: main;
+        }
+
+        .editor-toolbar__more-button {
+            grid-area: more;
+        }
+
+        .editor-toolbar__more {
+            background: var(--color-bg-gray);
+            bottom: 0;
+            outline: 1px dashed tomato;
+            padding: 1rem;
+            position: absolute;
+            right: 0;
+            transform: translateY(100%);
+            visibility: hidden;
+
+        }
+
+        .editor-toolbar__more--open {
+            visibility: visible;
+        }
+
         .new-note-button {
             background: none;
             border: none;
@@ -201,19 +233,24 @@
             </div>
             <!-- Toolbar -->
             <div class="editor-toolbar">
+                <div class="editor-toolbar__main">
+                    <button class="add-marker__button add-marker__button--disabled">
+                        <span class="add-marker__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                        </span>
+                        <span>
+                            Add Time Marker
+                        </span>
+                    </button>
+                </div>
 
-                <button class="add-marker__button add-marker__button--disabled">
-                    <span class="add-marker__icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
-                    </span>
-                    <span>
-                        Add Time Marker
-                    </span>
-                </button>
-                <button class="delete-note__buton">
-                    <span class="delete-note__icon"></span>
-                    <span>Delete note</span>
-                </button>
+                <button class="editor-toolbar__more-button">...</button>
+                <aside class="editor-toolbar__more">
+                    <button class="delete-note__buton">
+                        <span class="delete-note__icon"></span>
+                        <span>Delete note</span>
+                    </button>
+                </aside>
             </div>
             <h1 class="note-title"><a href="" class="note-title__link"></a></h1>
             <div class="note-area" contenteditable="true">
