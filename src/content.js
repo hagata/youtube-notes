@@ -9,8 +9,8 @@ chrome.runtime.onMessage.addListener(
                 'from the extension');
       if (request.method == 'getYTData') {
         getYTData().then((payload) => {
-          sendResponse({data: payload});
           console.log('Promise returned', payload);
+          sendResponse({data: payload});
         });
       }
 
@@ -19,9 +19,8 @@ chrome.runtime.onMessage.addListener(
           sendResponse({data: payload});
         });
       }
-      if (request.greeting == 'hello') {
-        sendResponse({farewell: 'goodbye'});
-      }
+
+      // Return True to indicate an async request and keep messaging open.
       return true;
     });
 
@@ -32,6 +31,7 @@ chrome.runtime.onMessage.addListener(
    *
    */
 function getYTData() {
+  // console.log(window.ytInitialData.contents.twoColumnWatchNextResults.results.results.contents[0].videoPrimaryInfoRenderer.title.simpleText)
   return new Promise((resolve, reject) => {
     const videoTitle = document.querySelector('.title').innerText;
     const pageData = parseQuery(window.location.search);
