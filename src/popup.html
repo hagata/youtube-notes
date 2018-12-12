@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <style>
 
+<head>
+    <meta name="google-signin-client_id" content="338971969016-8s15kipb2fs98rvls09j9nj5o733rht6.apps.googleusercontent.com">
+    <style>
         :root {
-        --color-bg-gray: #f5f5f5;
-        --color-dark-gray: #424242;
-        --color-icon-gray: #616161;
-        --color-contrast-gray: #90a4ae;
-        --color-red: #ff0000;
+            --color-bg-gray: #f5f5f5;
+            --color-dark-gray: #424242;
+            --color-icon-gray: #616161;
+            --color-contrast-gray: #90a4ae;
+            --color-blue: #1a73e8;
+            --color-red: #ff0000;
         }
 
         body {
@@ -27,12 +29,29 @@
             justify-content: space-between;
         }
 
+        .logged-out-view {
+            align-items: center;
+            display: none;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .login-w-Google {
+            background: none;
+            border: none;
+            color: var(--color-blue);
+            cursor: pointer;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
         .header__title {
             display: flex;
             justify-content: center;
         }
 
-        .add-marker__button {
+        .add-marker__button,
+        .delete-note__button {
             align-items: center;
             background: none;
             border: none;
@@ -42,7 +61,7 @@
             font-size: .625rem;
             font-weight: 700;
             justify-content: center;
-            margin: 0 0 12px;
+            margin: 0;
             outline: transparent;
             text-transform: uppercase;
             padding: 0;
@@ -56,13 +75,66 @@
             padding-top: 2px;
         }
 
-        .add-marker__icon svg{
+        .delete-note__icon svg {
+            width: 18px;
+        }
+
+        .add-marker__icon svg {
             width: 16px;
+        }
+
+        .menu-ui__icon {
+            margin-right: 8px;
+        }
+
+        .offline {
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+
+        .note-title__edit-button,
+        .note-title__confirm-edit-button {
+            background: none;
+            display: none;
+            left: -24px;
+            border: none;
+            padding: 2px 24px 0 0;
+            position: absolute;
+            top: -4px;
+            z-index: 1;
+        }
+
+        .note-title__edit-confirm-button svg,
+        .note-title__edit-button svg {
+            width: 20px;
         }
 
         .note-title__link {
             /* appearance: none;
             cursor: pointer; */
+        }
+
+        .note-title__edit-input {
+            border: none;
+            border-bottom: 2px solid var(--color-red);
+            display: inline-block;
+            font-size: 1rem;
+            left: 0;
+            position: absolute;
+            top: 0;
+            width: 100%;
+        }
+
+        .note-title {
+            position: relative;
+        }
+
+        .note-title:hover > .note-title__edit-button,
+        .note-title__edit-button:hover  {
+            display: block;
         }
 
         .on-yt-indicator {
@@ -82,6 +154,7 @@
             outline: none;
             padding: 0;
         }
+
         .notes-sidebar {
             background: var(--color-bg-gray);
             color: hsl(0, 0%, 6%);
@@ -131,10 +204,13 @@
         }
 
         .editor-toolbar {
+            border-bottom: 1px solid gray;
             display: grid;
-            position: relative;
-            grid-template-columns: auto 32px;
             grid-template-areas: "main more";
+            grid-template-columns: auto 32px;
+            margin: 6px 0 12px;
+            padding-bottom: 6px;
+            position: relative;
         }
 
         .editor-toolbar__main {
@@ -143,37 +219,63 @@
         }
 
         .editor-toolbar__more-button {
+            background: none;
+            border: none;
+            cursor: pointer;
             grid-area: more;
+            margin: 0;
+            padding: 0;
         }
 
         .editor-toolbar__more {
             background: var(--color-bg-gray);
             bottom: 0;
-            outline: 1px dashed tomato;
+            box-shadow: 5px 3px 14px 1px rgba(0,0,0,0.3);
             padding: 1rem;
             position: absolute;
             right: 0;
             transform: translateY(100%);
             visibility: hidden;
-
         }
 
         .editor-toolbar__more--open {
             visibility: visible;
         }
 
+        .editor-toolbar__sign-out-button {
+            background: none;
+            text-transform: uppercase;
+            border: none;
+            font-weight: 500;
+
+        }
+
+        .user-context {
+            display: flex;
+            border-top: 1px solid var(--color-icon-gray);
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        .user-context__image {
+            border-radius: 50%;
+            display: block;
+            height: 26px;
+            width: 26px;
+        }
+
         .new-note-button {
+            align-items: center;
             background: none;
             border: none;
+            cursor: pointer;
             display: flex;
-            justify-content: center;
-            align-items: center;
             font-size: .875rem;
             font-weight: 700;
+            justify-content: center;
             margin: 0 0 12px;
             outline: transparent;
             padding: 0;
-            cursor: pointer;
         }
 
         .new-note__icon {
@@ -185,8 +287,9 @@
             flex-basis: 75%;
             height: 50vh;
             min-height: 600px;
-            padding: 12px 1rem;
+            padding:  0 2.2rem 12px;
         }
+
         .note-area {
             height: 100%;
         }
@@ -199,26 +302,27 @@
 
         .note-area:focus {
             outline: none;
-        };
+        }
 
-
+        ;
     </style>
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
 </head>
 
 <body>
-        <!-- <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
-        <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" /> -->
-        <!-- TODO: USER Account Firebase UI -->
-        <header>
-            <span class="header__title">YT NOTES <span class="on-yt-indicator"></span></span>
-            <span class="save-indicator"></span>
-        </header>
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
+    <!-- TODO: USER Account Firebase UI -->
+    <header>
+        <span class="header__title">YT NOTES <span class="on-yt-indicator"></span></span>
+        <span class="save-indicator"></span>
+    </header>
     <section class="ytnotes-popup">
         <aside class="notes-sidebar">
-            <button class="new-note-button">
+            <button class="new-note-button" hidden>
                 <span class="new-note__icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                        <path d="M0 0h24v24H0z" fill="none" /></svg>
                 </span>
                 <span>NEW NOTE</span>
             </button>
@@ -226,17 +330,19 @@
                 <!-- Notes from the database go here -->
             </ul>
         </aside>
-        <div  class="editor-view">
-            <!-- TODO: Add offline handling -->
-            <div class="offline" hidden>
-                No Internet Connection
+        <div class="editor-view">
+            <!-- Logged Out -->
+            <div class="logged-out-view">
+                <button class="login-w-Google">SIGN IN WITH GOOGLE</button>
             </div>
             <!-- Toolbar -->
-            <div class="editor-toolbar">
+            <div class="editor-toolbar" hidden>
                 <div class="editor-toolbar__main">
                     <button class="add-marker__button add-marker__button--disabled">
                         <span class="add-marker__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                                <path d="M0 0h24v24H0z" fill="none" /></svg>
                         </span>
                         <span>
                             Add Time Marker
@@ -244,22 +350,58 @@
                     </button>
                 </div>
 
-                <button class="editor-toolbar__more-button">...</button>
+                <button class="editor-toolbar__more-button">
+                    <span class="editor-toolbar__more-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </span>
+                </button>
                 <aside class="editor-toolbar__more">
-                    <button class="delete-note__buton">
-                        <span class="delete-note__icon"></span>
+                    <button class="delete-note__button">
+                        <span class="delete-note__icon menu-ui__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                        </span>
                         <span>Delete note</span>
                     </button>
+                    <div class="user-context">
+                            <img class="user-context__image" src="" alt="">
+                            <span class="logged-in-as"></span>
+                            <button class="editor-toolbar__sign-out-button">
+                                <span class="editor-toolbat__sign-out-icon menu-ui__icon">
+
+                                </span>
+                                <span>Sign out</span>
+                            </button>
+                    </div>
                 </aside>
             </div>
-            <h1 class="note-title"><a href="" class="note-title__link"></a></h1>
+            <!-- TODO: Add offline handling -->
+            <div class="offline" hidden>
+                    <span class="offline__icon">
+                            <svg width="120" height="90" viewBox="0 0 48 48" fill="#5f6368"><path d="M38.71 20.07C37.35 13.19 31.28 8 24 8c-2.95 0-5.7.87-8.02 2.34l2.92 2.92C20.43 12.47 22.16 12 24 12c6.08 0 11 4.92 11 11v1h3c3.31 0 6 2.69 6 6 0 2.27-1.27 4.22-3.13 5.24l2.9 2.9C46.32 36.33 48 33.37 48 30c0-5.28-4.11-9.56-9.29-9.93zM6 10.55l5.5 5.48C5.12 16.3 0 21.55 0 28c0 6.63 5.37 12 12 12h23.45l4 4L42 41.46 8.55 8 6 10.55zM15.45 20l16 16H12c-4.42 0-8-3.58-8-8s3.58-8 8-8h3.45z"></path></svg>
+                    </span>
+                    No Internet Connection
+            </div>
+
+            <h1 class="note-title">
+                <span class="note-title__plain-text"></span>
+                <a href="" class="note-title__link"></a>
+                <button class="note-title__edit-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+                </button>
+                <button class="note-title__confirm-edit-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </button>
+            </h1>
             <div class="note-area" contenteditable="true">
-                Loading...
+                <div class="note-area__no-notes" hidden>
+                    <h2>You Have no notes yet!</h2>
+                    <p>Create your first note by clicking "New Note" in the sidebar</p>
+                </div>
             </div>
         </div>
     </section>
 
-<script src="popup.js"></script>
+    <script src="popup.js"></script>
 </body>
 
 </html>

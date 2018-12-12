@@ -1,36 +1,62 @@
 import firebase from '@firebase/app';
 import '@firebase/firestore';
-// import firestore from 'firebase/firestore';
+require('firebase/auth');
 
-console.log('FIREBASE added', firebase);
+let CURRENT_USER = null;
 
 // Communication with Popup
 // LONG LIVED CONNECTION
 chrome.extension.onConnect.addListener(function(port) {
-  console.log('Connected .....');
+  console.log('YT Notes Connected.');
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) {
+      // If there is no user signed in, prompt to login.
+      port.postMessage('noUser');
+    } else {
+      CURRENT_USER = firebase.auth().currentUser;
+      port.postMessage('UserLoggedIn');
+    }
+  });
+
   port.onMessage.addListener(function(msg) {
-    console.log('message recieved', msg);
-    // on load
+    if (msg === 'login') {
+      initPopup().then((results) => {
+        port.postMessage('UserLoggedIn');
+      });
+    }
     if (msg.write) {
-      console.log('Backend write request', msg.write);
       writeNotes(msg.write).then((msg) => {
         if (msg == 'saved') {
           port.postMessage('saved');
         }
       })
           .catch((err) => {
-            console.log('err from top level promise');
+            console.log('WRITE: err from top level promise');
           });
       return;
     }
 
-    getNotes(port).then((payload) => {
-      console.log('RESOLVED PAYLOAD', payload);
-      port.postMessage({notesData: payload});
-    })
-        .catch((err) => {
-          console.log('err from top level promise');
+    if (msg === 'signout') {
+      signOutCurrentUser().then(() => {
+        port.postMessage('signedOut');
+      }).catch((error) => {
+        console.log('Sign Out Error:', error);
+      });
+      return;
+    }
+
+    if (msg === 'getNotes') {
+      getNotes(port).then((payload) => {
+        port.postMessage({
+          notesData: payload,
+          userName: CURRENT_USER.displayName,
+          userPhoto: CURRENT_USER.photoURL,
         });
+      }).catch((err) => {
+        port.postMessage('offline');
+        // TODO: better offline handling.
+      });
+    }
   });
 });
 
@@ -42,7 +68,6 @@ firebase.initializeApp({
   storageBucket: 'yt-notes-82fc5.appspot.com',
   messagingSenderId: '338971969016',
 });
-
 // Initialize Cloud Firestore through Firebase
 const db = firebase.firestore();
 
@@ -57,17 +82,18 @@ db.settings({
  *
  */
 function getNotes() {
+  console.log('GET NOTES');
   return new Promise((resolve, reject) => {
-    const userID = 'user-uuid'; // TODO: Use actual user ID
+    const userID = CURRENT_USER.uid;
     const docRef = db.collection('user-notes').doc(userID);
 
     docRef.get().then((query) => {
-      console.log('QUERY…', query);
-      console.log('QUery docs', query.docs);
       if (query.exists) {
         const notesData = query.data();
-        console.log('data', query.data()); // {object} {phrases: []}
         resolve(notesData);
+      } else {
+        // If the user doesn't have data yet, create an empty notes object
+        writeNotes({});
       }
     })
         .catch((error) => {
@@ -84,7 +110,7 @@ function getNotes() {
  */
 function writeNotes(writeData) {
   return new Promise((resolve, reject) => {
-    const userID = 'user-uuid'; // TODO: Use actual user ID
+    const userID = CURRENT_USER.uid;
     const docRef = db.collection('user-notes').doc(userID);
 
     docRef.set({notes: writeData})
@@ -99,3 +125,50 @@ function writeNotes(writeData) {
   });
 }
 
+/**
+ * Signs in using the popup window to sign in with Google.
+ * TODO:// Keep the popup open after signin and load the data.
+ * @return {Promise} Sign in attempt results
+ */
+function initPopup() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  return new Promise((resolve, reject) => {
+    firebase.auth().signInWithPopup(provider).then(function(result) {
+      // This gives you a Google Access Token.
+      // You can use it to access the Google API.
+      resolve('Signed-In', result);
+      // The signed-in user info.
+    }).catch(function(error) {
+      // Handle Errors here.
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      // The email of the user's account used.
+      const email = error.email;
+      // The firebase.auth.AuthCredential type that was used.
+      const credential = error.credential;
+
+      console.warn('Caught errors', {
+        errorCode,
+        errorMessage,
+        email,
+        credential,
+      });
+    });
+  });
+}
+
+/**
+ * Signs out the current user
+ * @return {Promise} returns a prmise when complete.
+ */
+function signOutCurrentUser() {
+  return new Promise((resolve, reject) => {
+    firebase.auth().signOut().then(() => {
+      // Sign-out successful.
+      resolve();
+    }).catch(function(error) {
+      // An error happened.
+      reject(error);
+    });
+  });
+}

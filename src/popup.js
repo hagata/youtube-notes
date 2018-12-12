@@ -1,15 +1,24 @@
 // TODO: define globals somewhere scoped better…maybe.
-let ACTIVE_NOTE = '';
+let ACTIVE_NOTE = 0;
+let NOTES_SORTED = [];
 let NOTES_DATA;
+
+let userPhoto;
 let notesArea;
 let notesTitle;
 let notesTitleLink;
-let timstampButton;
-let deleteNoteButton;
+let offlineUI;
+let notesTitleContainer;
+let titleInput;
+
+let buttonSignout;
+let buttonTimeStamp;
+let buttonDeleteNote;
 let buttonNotesMenuMore;
-let NotesMenuMore;
-// TODO: rename buttons to start with 'button'
-let newNoteButton;
+let buttonNewNote;
+let buttonEditTitle;
+let buttonEditTitleConfirm;
+
 let isYouTube = false;
 let activeTab;
 let notesList;
@@ -20,9 +29,16 @@ const port = chrome.extension.connect({
   name: 'YTNotes',
 });
 
+// Init, Dom ready, start firing off all the things.
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('loaded...');
+  console.log('Loaded...');
+  offlineUI = document.querySelector('.offline');
 
+  if (navigator.onLine == false) {
+    console.log('Offline handler');
+    setOffline();
+    return;
+  }
   // Get Chrome Tab/window data
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     const url = tabs[0].url;
@@ -36,15 +52,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+  editorToolbar = document.querySelector('.editor-toolbar');
   notesArea = document.querySelector('.note-area');
-  notesTitle = document.querySelector('.note-title');
+  notesTitle = document.querySelector('.note-title__plain-text');
   notesTitleLink = document.querySelector('.note-title__link');
-  newNoteButton = document.querySelector('.new-note-button');
-  timstampButton = document.querySelector('.add-marker__button');
-  deleteNoteButton = document.querySelector('.delete-note__buton');
+  notesTitleContainer = document.querySelector('.note-title');
+  buttonNewNote = document.querySelector('.new-note-button');
+  buttonTimeStamp = document.querySelector('.add-marker__button');
+  buttonDeleteNote = document.querySelector('.delete-note__button');
   notesList = document.querySelector('.notes-sidebar__notes');
   buttonNotesMenuMore = document.querySelector('.editor-toolbar__more-button');
   notesMenuMore = document.querySelector('.editor-toolbar__more');
+  userPhoto = document.querySelector('.user-context__image');
+  buttonSignout = document.querySelector('.editor-toolbar__sign-out-button');
+  buttonEditTitle = document.querySelector('.note-title__edit-button');
+  buttonEditTitleConfirm =
+    document.querySelector('.note-title__confirm-edit-button');
 
   port.postMessage('YTNotes-loaded');
 });
@@ -55,9 +78,25 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 port.onMessage.addListener(function(msg) {
   // if the backend successfully fetches and returns notesData…
+  if (msg === 'noUser') {
+    // No user is logged in, hide the notes view and show the Login View
+    console.warn('No User');
+    showLoginView();
+    return;
+  }
+
+  if (msg === 'UserLoggedIn') {
+    port.postMessage('getNotes');
+  }
+
   if (msg.notesData) {
     console.log('NOTES DATA RECEIVED');
     loadNotes(msg.notesData.notes);
+  }
+
+  // Add the user photo to the aside menu if needed.
+  if (msg.userPhoto && userPhoto.src != msg.userPhoto) {
+    userPhoto.src = msg.userPhoto;
   }
 
   if (msg == 'saved') {
@@ -74,16 +113,34 @@ port.onMessage.addListener(function(msg) {
  */
 function loadNotes(notes) {
   NOTES_DATA = notes;
-  populateSidebar();
+  console.log('Notes Sorted', NOTES_SORTED);
+  updateSidebar();
   setCurrentNoteView(ACTIVE_NOTE);
+  setSidebarActiveNote();
   bindEvents();
+}
+
+/**
+ * Re-orderes NOTES_SORTED based on lastSaved date
+ */
+function sortByLastSavedNote() {
+  // re-orders NOTES_
+  ACTIVE_NOTE = 0;
+  NOTES_SORTED = Object.values(NOTES_DATA);
+
+  NOTES_SORTED.sort(function(a, b) {
+    const dateA = new Date(a.lastSaved);
+    const dateB = new Date(b.lastSaved);
+    return dateB - dateA;
+  });
 }
 
 /**
  * Populates the sidebar with the available notes
  *
  */
-function populateSidebar() {
+function updateSidebar() {
+  sortByLastSavedNote();
   // REMOVE ALL OLD Entries
   while (notesList.firstChild) {
     notesList.removeChild(notesList.firstChild);
@@ -93,19 +150,18 @@ function populateSidebar() {
    *  The first time notes are sorted through and when we first set
    *  ACTIVE_NOTE to match the order of the sidebar
    */
-  for (const note in NOTES_DATA) {
-    if (NOTES_DATA.hasOwnProperty(note)) {
-      const noteItem = document.createElement('li');
+  NOTES_SORTED.forEach((note, index) => {
+    const noteItem = document.createElement('li');
 
-      noteItem.classList.add('notes-sidebar__note');
-      noteItem.innerHTML = `${NOTES_DATA[note].videoTitle}`;
-      ACTIVE_NOTE = note;
-      noteItem.dataset.noteId = `${note}`;
-      notesList.appendChild(noteItem);
-      setSidebarActiveNote();
-    }
-  };
-}
+    noteItem.classList.add('notes-sidebar__note');
+    noteItem.innerHTML = `${note.videoTitle}`;
+    noteItem.dataset.noteId = `${index}`;
+    notesList.appendChild(noteItem);
+  });
+
+  bindSidebarNoteEvents();
+  setSidebarActiveNote();
+};
 
 /**
  * Handles the class toggling for active state on sidebar items.
@@ -113,7 +169,7 @@ function populateSidebar() {
  */
 function setSidebarActiveNote() {
   const active = notesList.querySelector(`[data-note-id="${ACTIVE_NOTE}"]`);
-  console.log('ACTIVE NOTE SIDEBAR NODE', );
+  if (!active) return;
   // Remove the class on the current active item
   const previous = notesList.querySelector('.notes-sidebar__note--active');
   if (previous) {
@@ -132,44 +188,56 @@ function setSidebarActiveNote() {
  *
  */
 function bindEvents() {
-  const notes = document.querySelectorAll('.notes-sidebar__note');
-
-  // Click events for sidebar items
-  notes.forEach((note) => {
-    note.addEventListener('click', (e) => {
-      console.log('click sidebar', e);
-      ACTIVE_NOTE = e.target.dataset.noteId;
-      setCurrentNoteView();
-      setSidebarActiveNote();
-    });
-  });
+  bindSidebarNoteEvents();
 
   notesArea.addEventListener('input', debounce(inputHandler, 700, false));
 
   notesTitle.addEventListener('click', (e) => {
     e.preventDefault();
-    console.log('Link CLicked event target', e.target);
 
     chrome.tabs.create({url: e.target.href, selected: false});
   }, false);
 
-  newNoteButton.addEventListener('click', newNote);
+  buttonNewNote.addEventListener('click', newNote);
   if (isYouTube) {
-    timstampButton.addEventListener('click', addTimeMarkerToNote);
-    timstampButton.classList.remove('add-marker__button--disabled');
+    buttonTimeStamp.addEventListener('click', addTimeMarkerToNote);
+    buttonTimeStamp.classList.remove('add-marker__button--disabled');
   }
 
-  deleteNoteButton.addEventListener('click', (e) => {
-    console.log('deleting note: ', NOTES_DATA[ACTIVE_NOTE].videoID);
-    delete NOTES_DATA[ACTIVE_NOTE];
-    port.postMessage({write: NOTES_DATA});
-    populateSidebar();
-    console.log('attempt to show by didqw');
-    // TODO: Update the view to some other note?
-  });
+  buttonDeleteNote.addEventListener('click', deleteNote);
 
   buttonNotesMenuMore.addEventListener('click', (e) => {
     notesMenuMore.classList.toggle('editor-toolbar__more--open');
+  });
+
+  buttonEditTitle.addEventListener('click', editNoteTitleHandler);
+
+  buttonSignout.addEventListener('click', (e) => {
+    // send msg to backend to signout
+    e.preventDefault();
+    port.postMessage('signout');
+    NOTES_DATA = {};
+    NOTES_SORTED = {};
+    updateSidebar();
+    signInButton.removeEventListener('click', postLoginMessage);
+    showLoginView();
+  });
+}
+
+/**
+ * Binds events to each item in the sidebar.
+ */
+function bindSidebarNoteEvents() {
+  const notes = document.querySelectorAll('.notes-sidebar__note');
+
+
+  // Click events for sidebar items
+  notes.forEach((note) => {
+    note.addEventListener('click', (e) => {
+      ACTIVE_NOTE = e.target.dataset.noteId;
+      setCurrentNoteView();
+      setSidebarActiveNote();
+    });
   });
 }
 
@@ -185,20 +253,21 @@ function inputHandler(event) {
 }
 
 /**
+ *Set's offline UI elements on
+ *
+ */
+function setOffline() {
+  offlineUI.style.display = 'flex';
+}
+
+/**
  *Set's the note data from the active note to the note view pane
 
  */
 function setCurrentNoteView() {
-  if (NOTES_DATA[ACTIVE_NOTE].YTVideo) {
-    notesTitleLink.innerText = NOTES_DATA[ACTIVE_NOTE].videoTitle;
-  } else {
-    notesTitle.innerText = NOTES_DATA[ACTIVE_NOTE].videoTitle;
-    notesTitleLink.innerText = '';
-  }
-  if (NOTES_DATA[ACTIVE_NOTE].videoShareUrl) {
-    notesTitleLink.href = NOTES_DATA[ACTIVE_NOTE].videoShareUrl;
-  }
-  notesArea.innerHTML = NOTES_DATA[ACTIVE_NOTE].note;
+  if (NOTES_SORTED.length == 0) return; TODO:// Set Blank state
+  setCurrentNoteTitle();
+  notesArea.innerHTML = NOTES_SORTED[ACTIVE_NOTE].note;
 
   // bind timestamp links
   const noteLinks = notesArea.querySelectorAll('.note_area__timestamp-wrapper');
@@ -207,7 +276,120 @@ function setCurrentNoteView() {
     console.log('Handline link', {current, index, link});
     timestampClickHandler(current);
   });
-  setSaveIndicator({date: NOTES_DATA[ACTIVE_NOTE].lastSaved});
+  setSaveIndicator({date: NOTES_SORTED[ACTIVE_NOTE].lastSaved});
+}
+
+/**
+ *Handles setting the title in either a span, or a link.
+ *
+ */
+function setCurrentNoteTitle() {
+  if (NOTES_SORTED[ACTIVE_NOTE].YTVideo) {
+    notesTitleLink.innerText = NOTES_SORTED[ACTIVE_NOTE].videoTitle;
+    notesTitle.innerHTML = '';
+  } else {
+    notesTitle.innerText = NOTES_SORTED[ACTIVE_NOTE].videoTitle;
+    notesTitleLink.innerHTML = '';
+  }
+  if (NOTES_SORTED[ACTIVE_NOTE].videoShareUrl) {
+    notesTitleLink.href = NOTES_SORTED[ACTIVE_NOTE].videoShareUrl;
+  }
+}
+
+/**
+ * Shows the login view and hides other elements if there is no logged in
+ *  user.
+ *
+ */
+function showLoginView() {
+  const view = document.querySelector('.logged-out-view');
+  view.style.display = 'flex';
+
+  // This view controls adding an event listener;
+  const signInButton = view.querySelector('.login-w-Google');
+  signInButton.addEventListener('click', postLoginMessage);
+}
+
+/**
+ *Sends login message to backend.
+ * Split to its own function to be 'unbindable'
+ * @param {Event} e Click event
+ */
+function postLoginMessage(e) {
+  e.preventDefault();
+  port.postMessage('login');
+}
+
+/**
+ *Handler for editing the note title.
+ * TODO: Consider a cleaner approach to editing the title links
+ * @param {Event} e click event from edit button.
+ */
+function editNoteTitleHandler(e) {
+  // Add an input
+  titleInput = document.createElement('input');
+  titleInput.type = 'text';
+  titleInput.classList.add('note-title__edit-input');
+  titleInput.value = NOTES_SORTED[ACTIVE_NOTE].videoTitle;
+
+  // Hide the readable/clickable titles
+  notesTitle.style.visibility = 'hidden';
+  notesTitleLink.style.visibility = 'hidden';
+
+  notesTitleContainer.appendChild(titleInput);
+
+  // add an event to save the note title on confirm
+  // change the button to a confirm button
+  buttonEditTitle.style.display = 'none';
+  buttonEditTitleConfirm.style.display = 'flex';
+  buttonEditTitleConfirm.addEventListener('click', saveTitle);
+  titleInput.addEventListener('blur', saveTitle);
+  titleInput.addEventListener('keyup', titleInputKeyHandler);
+  // buttonEditTitleConfirm.addEventListener('click', saveTitle);
+}
+
+/**
+ * keyup event handler. Watchs for Enter to fire saved
+ *
+ * @param {*} e
+ */
+function titleInputKeyHandler(e) {
+  switch (e.keyCode) {
+    case 13: // Enter
+      saveTitle();
+      break;
+    default:
+      break;
+  }
+}
+
+/**
+ *Save the title by calling saveCurrentNote() and passing the title input
+ * value.
+ * Resets the Title edit UI and updates the sidebar.
+ * @param {*} e Click event
+ */
+function saveTitle(e) {
+  const newTitle = titleInput.value;
+  saveCurrentNote(newTitle);
+  // Update the title
+  setCurrentNoteTitle();
+  // Hide the readable/clickable titles
+  notesTitle.style.visibility = 'visible';
+  notesTitleLink.style.visibility = 'visible';
+  // reset Ui
+  buttonEditTitle.style.display = 'flex';
+  buttonEditTitleConfirm.style.display = 'none';
+
+  // remove event listeners
+  buttonEditTitleConfirm.removeEventListener('clcik', saveTitle);
+  titleInput.removeEventListener('blur', saveTitle);
+  titleInput.removeEventListener('keyup', titleInputKeyHandler);
+
+  titleInput.remove();
+
+  updateSidebar();
+  titleInput = null;
 }
 
 /**
@@ -231,7 +413,7 @@ function setSaveIndicator(state) {
   if (state.date) {
     savedTime = new Date(state.date);
   } else {
-    savedTime = new Date(NOTES_DATA[ACTIVE_NOTE].lastSaved);
+    savedTime = new Date(NOTES_SORTED[ACTIVE_NOTE].lastSaved);
   }
 
   if (today.toDateString() == savedTime.toDateString()) {
@@ -244,16 +426,42 @@ function setSaveIndicator(state) {
 /**
  * Posts a write message to the content script (content.js) to save the
  * current ACTIVE_NOTE
+ * @param {String} title optional title change string
  */
-function saveCurrentNote() {
+function saveCurrentNote(title) {
   // get content of note Area
   const noteState = notesArea.innerHTML;
-  console.log('saving current note', NOTES_DATA[ACTIVE_NOTE]);
+  if (title) {
+    NOTES_SORTED[ACTIVE_NOTE].videoTitle = title;
+  }
+
+  console.log('saving current note', ACTIVE_NOTE);
   // update the object
-  NOTES_DATA[ACTIVE_NOTE].note = noteState;
-  NOTES_DATA[ACTIVE_NOTE].lastSaved = new Date().toISOString();
+  NOTES_SORTED[ACTIVE_NOTE].note = noteState;
+  NOTES_SORTED[ACTIVE_NOTE].lastSaved = new Date().toISOString();
+  NOTES_DATA[NOTES_SORTED[ACTIVE_NOTE].videoID] = NOTES_SORTED[ACTIVE_NOTE];
   // Notify the background script to send to Firebase
   port.postMessage({write: NOTES_DATA});
+  // resort sidebar notes, because this note is now the latest.
+  // unless the sidebar is already in the right order, latest on top.
+  if (ACTIVE_NOTE == '0') return;
+  updateSidebar();
+}
+
+/**
+ * Delete's an event from Firebase.
+ * Specifically, this method removes the object reference from notes and
+ * updates the object in Firebase; it does not use firestore delete().
+ * @param {Event} e Clicke event that triggered the delete call
+ */
+function deleteNote(e) {
+  delete NOTES_DATA[NOTES_SORTED[ACTIVE_NOTE].videoID];
+  port.postMessage({write: NOTES_DATA});
+
+  updateSidebar();
+  ACTIVE_NOTE = 0;
+  setSidebarActiveNote();
+  setCurrentNoteView();
 }
 
 /**
@@ -322,25 +530,38 @@ function timestampClickHandler(parentNode) {
 function newNote() {
   getYTData().then((note) => {
     // Check if the note exists first
+    let noteIndex;
     if (NOTES_DATA[note.videoID]) {
-      console.log('VIDEO NOTE ALREADY EXISTS. ', );
-      ACTIVE_NOTE = note.videoID;
+      sortByLastSavedNote();
+      NOTES_SORTED.find((existing, index) => {
+        if (existing.videoID == note.videoID) {
+          noteIndex = index;
+          return;
+        }
+      });
+      ACTIVE_NOTE = noteIndex;
+      setCurrentNoteView();
       setSidebarActiveNote();
-      setCurrentNoteView(ACTIVE_NOTE);
       setSaveIndicator({
         note: 'Note for video already exists. Switched to it!',
       });
       return;
     }
 
+    // If the note doesn't exist, make a new one.
     NOTES_DATA[note.videoID] = note;
-    console.log('Generate New Note', NOTES_DATA);
     port.postMessage({write: NOTES_DATA});
-    ACTIVE_NOTE = note.videoID;
+    // Updated sorted array to include latest note and resort and repopulate
+    NOTES_SORTED = NOTES_DATA;
+    sortByLastSavedNote();
+    updateSidebar();
+    bindSidebarNoteEvents();
+    ACTIVE_NOTE = 0;
+    setSidebarActiveNote();
     setCurrentNoteView(ACTIVE_NOTE);
-    populateSidebar();
   });
 }
+
 
 /**
  * Get's Video data from YT via the Content script (content.js) by sending a

@@ -1,7 +1,7 @@
 {
-  "name": "YT Notes",
-  "version": "0.0.1",
-  "description": "Chrome Extension for contributing/flagging terms that should be a part of the Unbyas library",
+  "name": "YouTube Notes",
+  "version": "0.1.1",
+  "description": "Browser Extension for taking notes while watching YouTube! Notes are optimized for YouTube videos and inlude automatic titles and timestamping features",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "@firebase/app": "^0.3.5",
+    "@firebase/auth": "^0.9.0",
     "@firebase/firestore": "^0.8.8",
     "babel-eslint": "^10.0.1",
-    "firebase": "^5.5.5"
+    "firebase": "^5.7.0",
+    "firebaseui": "^3.4.1"
   }
 }
