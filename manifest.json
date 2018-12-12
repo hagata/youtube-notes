@@ -1,9 +1,9 @@
 {
     "manifest_version": 2,
-    "short_name": "YouTube Notes",
+    "short_name": "YT Notes",
     "name": "YouTube Notes",
-    "version": "0.1.1",
-    "description": "Chrome Extension Writing and managing notes for YouTube videos.",
+    "version": "0.1.6",
+    "description": "Browser Extension for Writing and managing notes for YouTube videos.",
     "browser_action": {
         "default_icon": "assets/yt-note-logo-48.png",
         "default_title": "YT Notes",
@@ -26,8 +26,7 @@
         "js": ["src/content.js"]
     }],
     "permissions": [
-        "https://*.youtube.com*",
-        "tabs"
+        "https://*.youtube.com/*"
     ],
     "content_security_policy":"script-src 'self' https://apis.google.com/ https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'"
 }

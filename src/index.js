@@ -53,7 +53,7 @@ chrome.extension.onConnect.addListener(function(port) {
           userPhoto: CURRENT_USER.photoURL,
         });
       }).catch((err) => {
-        port.postMessage('offline');
+        console.warn('Get Notes error', err);
         // TODO: better offline handling.
       });
     }
