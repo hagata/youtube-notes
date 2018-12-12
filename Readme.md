@@ -1,4 +1,7 @@
-# YouTube Notes Chrome extention [Alpha]
+# YouTube Notes Chrome extention [Beta]
+![yt-notes-screenshot-sm](https://user-images.githubusercontent.com/2608893/49850255-aaa7a980-fd91-11e8-8634-71dbe9e51781.png)
+
+
 Note taking app for writing and saving notes while watching videos on YouTube.com.
 
 Quickly saves timestamps when writing notes and creates quick share links to moments and video (note) titles.
