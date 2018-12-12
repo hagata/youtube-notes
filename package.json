@@ -1,6 +1,6 @@
 {
   "name": "YouTube Notes",
-  "version": "0.1.1",
+  "version": "0.1.7",
   "description": "Browser Extension for taking notes while watching YouTube! Notes are optimized for YouTube videos and inlude automatic titles and timestamping features",
   "main": "index.js",
   "scripts": {
