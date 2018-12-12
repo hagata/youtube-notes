@@ -192,7 +192,7 @@ function bindEvents() {
 
   notesArea.addEventListener('input', debounce(inputHandler, 700, false));
 
-  notesTitle.addEventListener('click', (e) => {
+  notesTitleLink.addEventListener('click', (e) => {
     e.preventDefault();
 
     chrome.tabs.create({url: e.target.href, selected: false});

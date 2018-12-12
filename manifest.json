@@ -1,7 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "YT Notes",
-    "version": "0.1",
+    "short_name": "YouTube Notes",
+    "name": "YouTube Notes",
+    "version": "0.1.1",
     "description": "Chrome Extension Writing and managing notes for YouTube videos.",
     "browser_action": {
         "default_icon": "assets/yt-note-logo-48.png",
