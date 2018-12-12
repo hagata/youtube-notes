@@ -3,15 +3,7 @@ Note taking app for writing and saving notes while watching videos on YouTube.co
 
 Quickly saves timestamps when writing notes and creates quick share links to moments and video (note) titles.
 
-Feature Roadmap:
-- Markdown support
-- Exporting to cloud services, e.g., Dropbox
-- Export ALL notes
-- Copy/paste
-
-Development Roadmap
-- clean up code
-- add webpack config, with Sass and modular src JS.
+Feature and development Roadmap: [https://github.com/hagata/youtube-notes/wiki](https://github.com/hagata/youtube-notes/wiki)
 
 # Getting started
 To get started contributing, or loading the extension for fun, Chrome must be set to developer mode for extensions.
